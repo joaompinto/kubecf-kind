@@ -1,4 +1,5 @@
 #!/bin/sh
+
 kind delete cluster --name kubecf
 kind create cluster --name kubecf
 
@@ -30,15 +31,16 @@ system_domain: ${node_ip}.nip.io
 features:
   eirini:
     enabled: true
-  ingress:
-    enabled: false
 services:
   router:
-    loadBalancerIP: ${node_ip}.nip.io
+    externalIPs:
+    - ${node_ip}
   ssh-proxy:
-    loadBalancerIP: ${node_ip}.nip.io
+    externalIPs:
+    - ${node_ip}
   tcp-router:
-    loadBalancerIP: ${node_ip}.nip.io
+    externalIPs:
+    - ${node_ip}
 kube:
   service_cluster_ip_range: 0.0.0.0/0
   pod_cluster_ip_range: 0.0.0.0/0
@@ -55,10 +57,12 @@ watch -t 'echo You will need to wait several minutes until the 19 kubecf pods be
 
 # TODO: expose the
 # kubectl expose service kubecf-router-public -n kubecf --name=kubecf-router-public-external --type=LoadBalancer --external-ip=172.17.0.2
-#cf api --skip-ssl-validation https://172.17.0.2
+cf api --skip-ssl-validation api.172.17.0.2.nip.io
 
 # Copy the admin cluster password.
 admin_pass=$(kubectl get secret \
         --namespace kubecf kubecf.var-cf-admin-password \
         -o jsonpath='{.data.password}' \
         | base64 --decode)
+
+cf auth admin "${admin_pass}"
